@@ -1,24 +1,19 @@
 import React,{Component} from 'react';
 import {Provider} from 'react-redux';
+import createSagaMiddleware from 'redux-saga'
 import {applyMiddleware, createStore,compose} from "redux";
+
 import {rootReducer} from '../reducers/index';
 import AppRoute from '../App';
-import thunk from 'redux-thunk';
+import rootSaga from '../saga'
+
+const sagaMiddleware = createSagaMiddleware()
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-const logger=store=>{
-    return next=>{
-        return action=>{
-            console.log('[Middleware] dispatching',action );
-            const result=next(action);
-            console.log('[Middleware] next state',store.getState());
-            return result;
-        }
-    }
-};
+const store = createStore(rootReducer, composeEnhancers(applyMiddleware(sagaMiddleware)));
 
-const store = createStore(rootReducer,composeEnhancers(applyMiddleware(thunk)));
+sagaMiddleware.run(rootSaga);
 
 export default class App extends Component{
     render(){

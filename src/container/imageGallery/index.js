@@ -4,7 +4,8 @@ import {bindActionCreators} from 'redux';
 import {Pagination, Icon} from 'antd';
 import {Spinner, Modal, ModalBody, ModalHeader} from 'reactstrap';
 
-import * as imageGallery from '../../actions/imageGallery/imageGalleryActions';
+import * as imageGallery from '../../saga/imageGallerySaga';
+import { fetchImageGalleryAction, addFavourites, removeFavourite } from '../../actions/imageGalleryAction'
 import './imageGallery.css';
 
 class Index extends Component {
@@ -28,13 +29,25 @@ class Index extends Component {
     };
 
     componentDidMount() {
-        const { action: { fetchImageGallery } = {} } = this.props;
-        fetchImageGallery().then((res) => {
-            if (res) {
-                const pageImage = res.filter(photos => photos.albumId === 1);
-                this.setState({photos: res, pageImageArr: pageImage, limit: pageImage.length});
+        const { fetchImageGallery } = this.props;
+        fetchImageGallery();
+
+    }
+
+    static getDerivedStateFromProps(nextProps, nextState) {
+        const { photos } = nextProps;
+        const { photos: statePhotos } = nextState;
+        if (statePhotos !== photos) {
+            const pageImage = photos.filter(photo => photo.albumId === 1);
+            return {
+                photos,
+                pageImageArr: pageImage,
+                limit: pageImage.length
             }
-        });
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
     }
 
     handleImageClick = (imageUrl) => {
@@ -48,7 +61,7 @@ class Index extends Component {
     };
 
     addFavourite = (imageId) => {
-        const { action: { addFavourites } = {} } = this.props;
+        const { addFavourites } = this.props;
         addFavourites(imageId)
     };
 
@@ -62,7 +75,7 @@ class Index extends Component {
     };
 
     removeFav = (id) => {
-        const { action: { removeFavourite } = {} } = this.props;
+        const { removeFavourite } = this.props;
         removeFavourite(id);
     };
 
@@ -143,16 +156,13 @@ class Index extends Component {
 const mapStateToProps = state => ({
     favouriteImage: state.imageGallery.favouriteImage,
     favouriteImageId: state.imageGallery.favouriteImageId,
+    photos: state.imageGallery.photos
 });
 
-const mapDispatchToProps = dispatch => {
-    return {
-        action: {
-             fetchImageGallery: bindActionCreators(imageGallery.fetchImageGallery, dispatch),
-             addFavourites: bindActionCreators(imageGallery.addFavourites, dispatch),
-            removeFavourite: bindActionCreators(imageGallery.removeFavourite, dispatch)
-        }
-    }
+const mapDispatchToProps = {
+    fetchImageGallery: fetchImageGalleryAction,
+    addFavourites: addFavourites,
+    removeFavourite: removeFavourite
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Index);
